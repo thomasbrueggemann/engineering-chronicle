@@ -10,10 +10,12 @@ struct Feed {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let feeds = get_feeds().await?;
+
     Ok(())
 }
 
-async fn get_feeds() -> Result<Option<&Vec<Feed>>, Box<dyn std::error::Error + Send + Sync>> {
+async fn get_feeds() -> Result<Vec<Feed>, Box<dyn std::error::Error + Send + Sync>> {
     let rss_feeds_uri = "https://raw.githubusercontent.com/kilimchoi/engineering-blogs/master/engineering_blogs.opml".parse()?;
 
     let https = HttpsConnector::new();
@@ -25,24 +27,19 @@ async fn get_feeds() -> Result<Option<&Vec<Feed>>, Box<dyn std::error::Error + S
 
     let document = OPML::from_str(&rss_feeds_opml).unwrap();
 
-    for outline in document.body.outlines {
-        for feed in outline.outlines {
-            println!("{}", feed.title.unwrap());
-        }
+    let outline = document.body.outlines.first().unwrap().to_owned();
 
-        let feeds = &outline
-            .outlines
-            .into_iter()
-            .map(|feed| {
-                return Feed {
-                    title: feed.title.unwrap().to_owned(),
-                    url: feed.url.unwrap().to_owned(),
-                };
-            })
-            .collect::<Vec<Feed>>();
+    let result = outline
+        .outlines
+        .into_iter()
+        .filter_map(|outline| {
+            if let (Some(text), Some(url)) = (outline.title, outline.url) {
+                Some(Feed { title: text, url })
+            } else {
+                None
+            }
+        })
+        .collect();
 
-        return Ok(Some(feeds));
-    }
-
-    Ok(None)
+    return Ok(result);
 }
