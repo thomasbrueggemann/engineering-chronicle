@@ -1,15 +1,25 @@
 use anyhow::{anyhow, Result};
+use dissolve::strip_html_tags;
 use feed_rs::parser;
+use mongodb::{
+    bson::doc,
+    options::{ClientOptions, InsertManyOptions},
+    Client,
+};
 use opml::OPML;
 use reqwest;
+use serde::{Deserialize, Serialize};
+use std::env;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 struct Blog {
     pub title: String,
     pub url: String,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 struct BlogPost {
+    pub url: String,
     pub title: String,
     pub content: String,
     pub blog: Blog,
@@ -21,9 +31,24 @@ async fn main() -> Result<()> {
 
     println!("{} blogs identified", blogs.len());
 
+    let mongo_connection_string = env::var("MONGODB_CONNECTION_STRING")
+        .expect("MongoDB connection string not set via environment variable!");
+
+    let mongo_client_options = ClientOptions::parse(mongo_connection_string).await?;
+    let mongo_client = Client::with_options(mongo_client_options)?;
+    let db = mongo_client.database("thefabricatedfeed");
+    let blog_posts_col = db.collection::<BlogPost>("blogposts");
+
     for blog in blogs {
         if let Ok(blog_posts) = parse_blog(&blog).await {
-            println!("{} posts for blog {}", blog_posts.len(), blog.url)
+            println!("{} posts for blog {}", blog_posts.len(), blog.url);
+
+            let _ = blog_posts_col
+                .insert_many(
+                    blog_posts,
+                    InsertManyOptions::builder().ordered(false).build(),
+                )
+                .await;
         }
     }
 
@@ -41,11 +66,12 @@ async fn parse_blog(blog: &Blog) -> Result<Vec<BlogPost>> {
             if let Some(title) = entry.title {
                 let content = match entry.summary {
                     Some(summary) => summary.content,
-                    None => entry.content.unwrap().body.unwrap(),
+                    None => entry.content.unwrap().body.unwrap_or_default(),
                 };
 
                 Some(BlogPost {
-                    content,
+                    url: entry.id,
+                    content: strip_html_tags(&content).join(""),
                     title: title.content,
                     blog: blog.clone(),
                 })
