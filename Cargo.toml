@@ -16,3 +16,4 @@ serde = "1.0.152"
 dissolve = "0.2.2"
 chrono = "0.4.23"
 bson = { version = "2.5.0", features = ["chrono-0_4"] }
+ramhorns = "0.5"
