@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use chrono::{DateTime, Utc};
 use dissolve::strip_html_tags;
 use feed_rs::parser;
 use mongodb::{
@@ -23,6 +24,9 @@ struct BlogPost {
     pub title: String,
     pub content: String,
     pub blog: Blog,
+
+    #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
+    pub published: DateTime<Utc>,
 }
 
 #[tokio::main]
@@ -74,6 +78,7 @@ async fn parse_blog(blog: &Blog) -> Result<Vec<BlogPost>> {
                     content: strip_html_tags(&content).join(""),
                     title: title.content,
                     blog: blog.clone(),
+                    published: entry.published.or(Some(Utc::now()))?,
                 })
             } else {
                 None
