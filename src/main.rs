@@ -1,4 +1,5 @@
 mod blogs;
+mod templates;
 
 use anyhow::{anyhow, Result};
 use blogs::{get_blogs, parse_blog, Blog, BlogPost};
@@ -9,6 +10,7 @@ use mongodb::{
     Client,
 };
 use std::env;
+use templates::render_html;
 
 #[tokio::main]
 async fn main() -> Result<()> {
