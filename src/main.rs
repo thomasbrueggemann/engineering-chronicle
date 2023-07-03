@@ -1,10 +1,8 @@
 mod blogs;
 
-use anyhow::{anyhow, Result};
-use blogs::{get_blogs, parse_blog, Blog, BlogPost};
-use chrono::{DateTime, Utc};
+use anyhow::Result;
+use blogs::{get_blogs, parse_blog, BlogPost};
 use mongodb::{
-    bson::doc,
     options::{ClientOptions, InsertManyOptions},
     Client,
 };
