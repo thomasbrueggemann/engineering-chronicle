@@ -18,6 +18,7 @@ pub struct BlogPost {
     pub title: String,
     pub content: String,
     pub blog: Blog,
+    pub categories: Vec<String>,
 
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     pub published: DateTime<Utc>,
@@ -34,8 +35,10 @@ pub async fn parse_blog(blog: &Blog) -> Result<Vec<BlogPost>> {
             if let Some(title) = entry.title {
                 let content = match entry.summary {
                     Some(summary) => summary.content,
-                    None => entry.content.unwrap().body.unwrap_or_default(),
+                    None => entry.content?.body.unwrap_or_default(),
                 };
+
+                let categories = entry.categories.into_iter().map(|c| c.term).collect();
 
                 Some(BlogPost {
                     url: entry.id,
@@ -43,6 +46,7 @@ pub async fn parse_blog(blog: &Blog) -> Result<Vec<BlogPost>> {
                     title: title.content,
                     blog: blog.clone(),
                     published: entry.published.or(Some(Utc::now()))?,
+                    categories
                 })
             } else {
                 None

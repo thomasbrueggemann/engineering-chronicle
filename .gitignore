@@ -14,3 +14,4 @@ Cargo.lock
 
 /target
 var.env
+run.sh

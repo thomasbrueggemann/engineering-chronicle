@@ -1,5 +1,4 @@
 mod blogs;
-mod templates;
 
 use anyhow::{anyhow, Result};
 use blogs::{get_blogs, parse_blog, Blog, BlogPost};
@@ -9,8 +8,7 @@ use mongodb::{
     options::{ClientOptions, InsertManyOptions},
     Client,
 };
-use std::env;
-use templates::render_html;
+use std::{env, process};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -23,7 +21,7 @@ async fn main() -> Result<()> {
 
     let mongo_client_options = ClientOptions::parse(mongo_connection_string).await?;
     let mongo_client = Client::with_options(mongo_client_options)?;
-    let db = mongo_client.database("thefabricatedfeed");
+    let db = mongo_client.database("engineeringchronicle");
     let blog_posts_col = db.collection::<BlogPost>("blogposts");
 
     for blog in blogs {
@@ -39,5 +37,6 @@ async fn main() -> Result<()> {
         }
     }
 
-    Ok(())
+    println!("Done");
+    process::exit(0);
 }
