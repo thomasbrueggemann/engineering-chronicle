@@ -22,9 +22,12 @@ async fn main() -> Result<()> {
     let db = mongo_client.database("engineeringchronicle");
     let blog_posts_col = db.collection::<BlogPost>("blogposts");
 
+    let mut i = 1;
+    let blogs_count = blogs.len();
+
     for blog in blogs {
         if let Ok(blog_posts) = parse_blog(&blog).await {
-            println!("{} posts for blog {}", blog_posts.len(), blog.url);
+            println!("({}/{}) {} posts for blog {}", i, blogs_count, blog_posts.len(), blog.url);
 
             let _ = blog_posts_col
                 .insert_many(
@@ -32,6 +35,8 @@ async fn main() -> Result<()> {
                     InsertManyOptions::builder().ordered(false).build(),
                 )
                 .await;
+
+            i += 1;
         }
     }
 
