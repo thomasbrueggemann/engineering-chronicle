@@ -2,7 +2,7 @@
 extern crate rocket;
 
 use futures::TryStreamExt;
-use mongodb::bson::{Document, doc};
+use mongodb::bson::doc;
 use mongodb::options::FindOptions;
 use mongodb::{options::ClientOptions, Client};
 use rocket::fairing::{Fairing, Info, Kind};
@@ -39,9 +39,17 @@ async fn latest_posts() -> Json<Vec<BlogPost>> {
         .build();
 
     let cursor = blog_posts_col.find(doc! {}, find_options).await.unwrap();
-    let blog_posts = cursor.try_collect().await.unwrap();
+    let blog_posts: Vec<BlogPost> = cursor.try_collect().await.unwrap();
 
-    Json(blog_posts)
+    let trunc: Vec<BlogPost> = blog_posts.into_iter().map(|mut post| {
+        if post.content.len() > 250 {
+            post.content = format!("{}[…]", post.content[..250].to_string());
+        }
+
+        post
+    }).collect();
+
+    Json(trunc)
 }
 
 pub struct CORS;
