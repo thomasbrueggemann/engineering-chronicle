@@ -12,6 +12,7 @@ Cargo.lock
 
 # Added by cargo
 
-/target
+**/target
 var.env
-run.sh
+crawl.sh
+**/dist

@@ -1,0 +1,21 @@
+[package]
+name = "crawler"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+opml = "1.1.5"
+tokio = { version = "1", features = ["full"] }
+feed-rs = "1.2"
+anyhow = "1.0.68"
+reqwest = "0.11.14"
+mongodb = "2.3.1"
+serde = "1.0.152"
+dissolve = "0.2.2"
+chrono = "0.4.23"
+bson = { version = "2.5.0", features = ["chrono-0_4"] }
+futures = "0.3.28"
+stopwatch = "0.0.7"
+colored = "2"

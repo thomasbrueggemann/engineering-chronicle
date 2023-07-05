@@ -17,6 +17,6 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: run
-          args: --release
+          args: -p crawler --release
         env:
           MONGODB_CONNECTION_STRING: ${{ secrets.MONGODB_CONNECTION_STRING }}
