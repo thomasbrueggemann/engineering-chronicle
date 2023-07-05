@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, Utc};
 use dissolve::strip_html_tags;
@@ -24,7 +26,7 @@ pub struct BlogPost {
     pub published: DateTime<Utc>,
 }
 
-pub async fn parse_blog(blog: &Blog) -> Result<Vec<BlogPost>> {
+pub async fn parse_blog(blog: Blog) -> Result<Vec<BlogPost>> {
     let content = download_content(&blog.url).await?;
     let rss = parser::parse(content.as_bytes())?;
 
@@ -88,7 +90,11 @@ pub async fn get_blogs() -> Result<Vec<Blog>> {
 }
 
 async fn download_content(url: &str) -> Result<String> {
-    let response = reqwest::get(url).await?;
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build()?;
+
+    let response = client.get(url).send().await?;
 
     if response.status() != 200 {
         return Err(anyhow!("Status code {}", response.status()));

@@ -2,44 +2,59 @@ mod blogs;
 
 use anyhow::Result;
 use blogs::{get_blogs, parse_blog, BlogPost};
+use futures::stream::FuturesUnordered;
 use mongodb::{
     options::{ClientOptions, InsertManyOptions},
     Client,
 };
-use std::{env, process};
+use stopwatch::Stopwatch;
+use std::env;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+
+    let mut watch = Stopwatch::start_new();
+
+    println!("Start reading enginnering blogs... ");
+
     let blogs = get_blogs().await?;
 
-    println!("{} blogs identified", blogs.len());
+    println!("✅ {} identified engineering blogs [{}s]", blogs.len(), watch.elapsed_ms() / 1000);
 
     let mongo_connection_string = env::var("MONGODB_CONNECTION_STRING")
-        .expect("MongoDB connection string not set via environment variable!");
+        .expect("MongoDB connection string not set via env var MONGODB_CONNECTION_STRING!");
 
     let mongo_client_options = ClientOptions::parse(mongo_connection_string).await?;
     let mongo_client = Client::with_options(mongo_client_options)?;
     let db = mongo_client.database("engineeringchronicle");
     let blog_posts_col = db.collection::<BlogPost>("blogposts");
 
-    let mut i = 1;
-    let blogs_count = blogs.len();
+    println!("Start downloading blog feeds into memory... ");
+    watch.restart();
 
-    for blog in blogs {
-        if let Ok(blog_posts) = parse_blog(&blog).await {
-            println!("({}/{}) {} posts for blog {}", i, blogs_count, blog_posts.len(), blog.url);
+    let parse_all_blogs_tasks: FuturesUnordered<_> = blogs
+        .into_iter()
+        .map(|blog| tokio::spawn(parse_blog(blog)))
+        .collect();
 
+    let blog_posts = futures::future::join_all(parse_all_blogs_tasks).await;
+    println!("✅ {} blog feeds downloaded [{}s]", blog_posts.len(), watch.elapsed_ms() / 1000);
+
+    println!("Start inserting blog posts into database...");
+    watch.restart();
+
+    for blog_post in blog_posts {
+        if let Ok(posts) = blog_post.unwrap() {
             let _ = blog_posts_col
                 .insert_many(
-                    blog_posts,
+                    posts,
                     InsertManyOptions::builder().ordered(false).build(),
                 )
                 .await;
-
-            i += 1;
         }
     }
 
-    println!("Done");
-    process::exit(0);
+    println!("✅ Done inserting [{}s]", watch.elapsed_ms() / 1000);
+
+    Ok(())
 }
