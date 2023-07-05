@@ -10,13 +10,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+
       - uses: actions-rs/cargo@v1
         with:
           command: install
           args: --locked trunk
+
+      - name: Install WASM target
+        run: rustup target add wasm32-unknown-unknown
+
       - name: Build wasm app
         run: trunk build --release --public-url engineering-chronicle
         working-directory: ./ui
+
+      - name: Copy wasm app to docs folder
+        run: rm -R docs && cp ./ui/dist docs
