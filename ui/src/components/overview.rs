@@ -40,7 +40,7 @@ pub fn Overview() -> Html {
                         <div class="media-content">
                             <div class="content">
                             <p>
-                                <strong>{p.title}</strong> {" · "} {p.blog.title} {" · "} <small>{p.published.date.number_long}</small>
+                                <a href={p.url} target="_blank"><strong>{p.title}</strong></a> {" · "} {p.blog.title} {" · "} <small>{p.published.date.number_long}</small>
                                 <br />
                                 {p.content}
                             </p>
