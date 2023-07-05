@@ -1,7 +1,6 @@
 name: Build Frontend
 
 on: 
-  push:
   workflow_dispatch:
 
 jobs:
@@ -28,4 +27,11 @@ jobs:
         working-directory: ./ui
 
       - name: Copy wasm app to docs folder
-        run: rm -R docs && cp ./ui/dist docs
+        run: rm -R docs 2>/dev/null && cp ./ui/dist docs
+
+      - name: Commit docs folder
+        uses: EndBug/add-and-commit@v9
+        with:
+          default_author: github_actions
+          message: 'Update frontend'
+          add: 'docs/*'
