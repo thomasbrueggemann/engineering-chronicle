@@ -8,6 +8,9 @@ edition = "2021"
 [dependencies]
 yew = { version = "0.20.0", features = ["csr"] }
 yew-router = "0.17"
-realm-web-rs = "0.1.0"
+yew-hooks = "0.2.0"
 anyhow = "1.0.71"
-reqwest = "0.11.14"
+reqwest = { version = "0.11.14", features = ["json"] }
+serde = "1.0.152"
+log = "0.4.19"
+wasm-logger = "0.2.0"
