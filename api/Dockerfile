@@ -1,0 +1,20 @@
+FROM rust:1.54 as build
+
+RUN USER=root cargo new --bin api
+WORKDIR /api
+
+COPY ./Cargo.lock ./Cargo.lock
+COPY ./Cargo.toml ./Cargo.toml
+COPY ./src ./src
+
+RUN cargo build --bin api --release
+
+FROM debian:buster-slim
+RUN apt update
+RUN apt install openssl apt-transport-https ca-certificates -y
+
+COPY --from=build /api/target/release/api .
+
+ENV ROCKET_ADDRESS=0.0.0.0
+EXPOSE 8000
+CMD ["./api"]

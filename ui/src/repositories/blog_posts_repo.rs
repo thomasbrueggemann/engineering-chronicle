@@ -1,37 +1,64 @@
-use realm_web_rs::{Client, Collection, bson::{doc, self, Bson}};
-use std::{env, time::Duration};
+use std::collections::HashMap;
+use serde::{Serialize, Deserialize};
 
 use super::models::blog_post::BlogPost;
 
 pub struct BlogPostsRepository {
-    client: Client,
-    collection: Collection,
+    application_id: String,
+    api_key: String,
+    deployment_region: String,
+    data_source: String,
+    database: String,
+    collection: String,
     http_client: reqwest::Client
+}
+
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct AuthenticationResponse {
+    access_token: String,
+    refresh_token: String,
+    user_id: String
 }
 
 impl BlogPostsRepository {
     
     pub fn new() -> BlogPostsRepository {
         BlogPostsRepository {
-            client: Client { 
-                application_id: "data-ooknz".to_string(), 
-                api_token: "s0IOoAn5zoYqZPY4qCQdmrB5At3oLuNK6IyTU29wdj8fUzYzBFsQL19dAH2ZpS2V".to_string(), 
-                api_version: realm_web_rs::ApiVersion::v1,
-                deployment_region: Some("westeurope.azure".to_string()),
-            },
-            collection: Collection { 
-                data_source: "EngineeringChronicle".to_string(),
-                database: "engineeringchronicle".to_string(), 
-                collection: "blogposts".to_string() 
-            },
-            http_client: reqwest::Client::builder()
-                .build()
-                .unwrap()
+            application_id: "data-ooknz".to_string(),
+            api_key: "s0IOoAn5zoYqZPY4qCQdmrB5At3oLuNK6IyTU29wdj8fUzYzBFsQL19dAH2ZpS2V".to_string(),
+            deployment_region: "westeurope.azure".to_string(),
+            data_source: "EngineeringChronicle".to_string(),
+            database: "engineeringchronicle".to_string(), 
+            collection: "blogposts".to_string(),
+            http_client: reqwest::Client::new()
         }
     }
 
+    pub async fn get_access_token(&self) -> Result<String, String> {
+        let url = format!("https://{}.data.mongodb-api.com/api/client/v2.0/app/{}/auth/providers/api-key/login", self.deployment_region, self.application_id);
+
+        let mut body = HashMap::new();
+        body.insert("key", &self.api_key);
+
+        let result = self.http_client
+            .post(url)
+            .json(&body)
+            .send()
+            .await
+            .unwrap()
+            .json::<AuthenticationResponse>()
+            .await
+            .unwrap();
+
+        Ok(result.access_token)
+    }
+
     pub async fn get_latest(&self, limit: i32) -> Result<Vec<BlogPost>, String> {
-        let results = self.client.find(
+
+        let access_token = self.get_access_token().await.unwrap();
+
+    /*     let results = self.client.find(
             self.collection.clone(), 
             Some(doc!{}), 
             Some(doc! {
@@ -43,6 +70,7 @@ impl BlogPostsRepository {
             Some(limit), 
             Some(0), 
             &self.http_client).await;
+
 
         match results {
             Ok(documents) => {
@@ -56,7 +84,9 @@ impl BlogPostsRepository {
 
                 Ok(blog_posts)
             },
-            Err(e) => Ok(vec![])
-        }
+            Err(_e) => Ok(vec![])
+        }*/
+
+        Ok(vec![])
     }
 }

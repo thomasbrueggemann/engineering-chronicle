@@ -19,3 +19,4 @@ bson = { version = "2.5.0", features = ["chrono-0_4"] }
 futures = "0.3.28"
 stopwatch = "0.0.7"
 colored = "2"
+shared = { path = "../shared" }
