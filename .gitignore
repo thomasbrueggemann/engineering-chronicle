@@ -16,3 +16,4 @@ Cargo.lock
 var.env
 *.sh
 **/dist
+.DS_Store

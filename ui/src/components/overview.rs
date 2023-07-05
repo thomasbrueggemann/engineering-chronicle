@@ -15,7 +15,7 @@ pub fn Overview() -> Html {
     }, UseAsyncOptions::enable_auto());
 
     if state.loading {
-        return html! { <bold>{"Loading..."}</bold>}
+        return html! { <section class="section"><bold>{"Loading..."}</bold></section>}
     }
 
     if let Some(posts) = &state.data {
