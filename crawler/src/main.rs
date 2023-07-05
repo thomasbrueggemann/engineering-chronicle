@@ -55,6 +55,7 @@ async fn main() -> Result<()> {
     }
 
     println!("✅ Done inserting [{}s]", watch.elapsed_ms() / 1000);
+    watch.stop();
 
     Ok(())
 }

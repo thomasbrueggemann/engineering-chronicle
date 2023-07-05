@@ -6,8 +6,8 @@ on:
 name: Run Crawler
 
 jobs:
-  build_and_test:
-    name: Rust project
+  crawl:
+    name: Crawl
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
