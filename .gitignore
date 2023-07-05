@@ -14,5 +14,5 @@ Cargo.lock
 
 **/target
 var.env
-crawl.sh
+*.sh
 **/dist
