@@ -36,7 +36,7 @@ impl BlogPostsRepository {
     }
 
     pub async fn get_access_token(&self) -> Result<String, String> {
-        let url = format!("https://realm.mongodb.com/api/client/v2.0/app/myapp-abcde/auth/providers/api-key/login");
+        let url = format!("https://{}.data.mongodb-api.com/api/client/v2.0/app/{}/auth/providers/api-key/login", self.deployment_region, self.application_id);
 
         let mut body = HashMap::new();
         body.insert("key", &self.api_key);

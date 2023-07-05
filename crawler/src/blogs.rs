@@ -1,30 +1,12 @@
 use std::time::Duration;
 
 use anyhow::{anyhow, Result};
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use dissolve::strip_html_tags;
 use feed_rs::parser;
 use opml::OPML;
 use reqwest;
-use serde::{Deserialize, Serialize};
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Blog {
-    pub title: String,
-    pub url: String,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct BlogPost {
-    pub url: String,
-    pub title: String,
-    pub content: String,
-    pub blog: Blog,
-    pub categories: Vec<String>,
-
-    #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
-    pub published: DateTime<Utc>,
-}
+use shared::blog_post::{Blog, BlogPost};
 
 pub async fn parse_blog(blog: Blog) -> Result<Vec<BlogPost>> {
     let content = download_content(&blog.url).await?;

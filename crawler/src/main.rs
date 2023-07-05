@@ -1,12 +1,13 @@
 mod blogs;
 
 use anyhow::Result;
-use blogs::{get_blogs, parse_blog, BlogPost};
+use blogs::{get_blogs, parse_blog};
 use futures::stream::FuturesUnordered;
 use mongodb::{
     options::{ClientOptions, InsertManyOptions},
     Client,
 };
+use shared::blog_post::BlogPost;
 use stopwatch::Stopwatch;
 use std::env;
 
