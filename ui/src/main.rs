@@ -5,6 +5,7 @@ use yew_router::prelude::*;
 
 mod components;
 mod route;
+mod repositories;
 
 fn routes(routes: Route) -> Html {
     match routes {
