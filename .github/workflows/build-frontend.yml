@@ -19,3 +19,4 @@ jobs:
           args: --locked trunk
       - name: Build wasm app
         run: trunk build --release --public-url engineering-chronicle
+        working-directory: ./ui
