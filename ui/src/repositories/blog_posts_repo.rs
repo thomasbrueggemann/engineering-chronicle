@@ -1,4 +1,4 @@
-use realm_web_rs::{Client, Collection, bson::doc};
+use realm_web_rs::{Client, Collection, bson::{doc, self, Bson}};
 use std::{env, time::Duration};
 
 use super::models::blog_post::BlogPost;
@@ -12,14 +12,10 @@ pub struct BlogPostsRepository {
 impl BlogPostsRepository {
     
     pub fn new() -> BlogPostsRepository {
-
-        let mongodb_api_key = env::var("MONGODB_API_KEY")
-            .expect("MongoDB api key not set via env var MONGODB_API_KEY!");
-
         BlogPostsRepository {
             client: Client { 
                 application_id: "data-ooknz".to_string(), 
-                api_token: mongodb_api_key, 
+                api_token: "s0IOoAn5zoYqZPY4qCQdmrB5At3oLuNK6IyTU29wdj8fUzYzBFsQL19dAH2ZpS2V".to_string(), 
                 api_version: realm_web_rs::ApiVersion::v1,
                 deployment_region: Some("westeurope.azure".to_string()),
             },
@@ -34,7 +30,7 @@ impl BlogPostsRepository {
         }
     }
 
-    pub async fn get_latest(&self, limit: i32) -> Result<Vec<BlogPost>, anyhow::Error> {
+    pub async fn get_latest(&self, limit: i32) -> Result<Vec<BlogPost>, String> {
         let results = self.client.find(
             self.collection.clone(), 
             Some(doc!{}), 
@@ -49,8 +45,16 @@ impl BlogPostsRepository {
             &self.http_client).await;
 
         match results {
-            Ok(blog_posts) => {
-                Ok(vec![])
+            Ok(documents) => {
+                let blog_posts: Vec<BlogPost> = documents.documents
+                    .unwrap()
+                    .into_iter()
+                    .map(|doc| bson::from_bson(Bson::Document(doc)))
+                    .filter(|blog_post| blog_post.is_ok())
+                    .map(|blog_post| blog_post.unwrap())
+                    .collect::<Vec<BlogPost>>();
+
+                Ok(blog_posts)
             },
             Err(e) => Ok(vec![])
         }
