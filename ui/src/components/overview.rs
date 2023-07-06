@@ -26,7 +26,10 @@ pub fn Overview() -> Html {
         html! {
             <>
                 <section class="section">
-                <h1 class="title">{"📣 The Engineering Chronicle"}</h1>
+                <center class="mb-6">
+                    <h1 class="is-size-1" style="font-family: 'Queen Love Stories free', sans-serif;">{"📣 The Engineering Chronicle"}</h1>
+                </center>
+        
                 {for blog_posts.iter().map(|post| {
 
                     let p = post.to_owned();
