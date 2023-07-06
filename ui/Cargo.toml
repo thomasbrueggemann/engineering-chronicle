@@ -14,3 +14,4 @@ reqwest = { version = "0.11.14", features = ["json"] }
 serde = "1.0.152"
 log = "0.4.19"
 wasm-logger = "0.2.0"
+chrono = "0.4.23"
