@@ -1,26 +1,32 @@
-use chrono::{Utc, DateTime, NaiveDateTime};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use log::info;
 use yew::prelude::*;
 use yew_hooks::{use_async_with_options, UseAsyncOptions};
 
-use crate::{repositories::blog_posts_repo::BlogPostsRepository, models::blog_post::{BlogPost, Blog}};
+use crate::{
+    components::nav::Nav,
+    models::blog_post::{Blog, BlogPost},
+    repositories::blog_posts_repo::BlogPostsRepository,
+};
 
 #[function_component]
 pub fn Overview() -> Html {
-    let state = use_async_with_options(async move {
-         let blog_posts_repo = BlogPostsRepository::new();
-         info!("asd");
-         let result = blog_posts_repo.get_latest().await;
+    let state = use_async_with_options(
+        async move {
+            let blog_posts_repo = BlogPostsRepository::new();
+            info!("asd");
+            let result = blog_posts_repo.get_latest().await;
 
-         return result;
-    }, UseAsyncOptions::enable_auto());
+            return result;
+        },
+        UseAsyncOptions::enable_auto(),
+    );
 
     if state.loading {
-        return html! { <section class="section"><bold>{"Loading..."}</bold></section>}
+        return html! { <section class="section"><bold>{"Loading..."}</bold></section>};
     }
 
     if let Some(posts) = &state.data {
-
         let blog_posts: Vec<BlogPost> = posts.to_owned();
 
         html! {
@@ -29,7 +35,9 @@ pub fn Overview() -> Html {
                 <center class="mb-6">
                     <h1 class="is-size-1" style="font-family: 'Queen Love Stories free', sans-serif;">{"📣 The Engineering Chronicle"}</h1>
                 </center>
-        
+
+                <Nav />
+
                 {for blog_posts.iter().map(|post| {
 
                     let p = post.to_owned();
@@ -43,10 +51,10 @@ pub fn Overview() -> Html {
                         </div>
                         <div class="media-content">
                             <div class="content">
-                                <a href={p.url} target="_blank"><strong>{p.title}</strong></a> 
-                                {" · "} 
-                                {p.blog.title} 
-                                {" · "} 
+                                <a href={p.url} target="_blank"><strong>{p.title}</strong></a>
+                                {" · "}
+                                {p.blog.title}
+                                {" · "}
                                 <small>{readable_date(p.published.date.number_long)}</small>
                                 <br />
                                 {p.content}
@@ -98,22 +106,20 @@ pub fn Overview() -> Html {
                 </section>
             </>
         }
-    }
-    else {
+    } else {
         html! {
             <section class="section">{"😢 nothing to see here"}</section>
         }
     }
-    
 }
 
 fn readable_date(timestamp: String) -> String {
     let timestamp_parsed = timestamp.parse::<i64>().unwrap() / 1000;
 
     let parsed_date = DateTime::<Utc>::from_utc(
-        NaiveDateTime::from_timestamp_opt(
-            timestamp_parsed, 0).unwrap(), 
-            Utc);
+        NaiveDateTime::from_timestamp_opt(timestamp_parsed, 0).unwrap(),
+        Utc,
+    );
 
     parsed_date.format("%d.%m.%Y %H:%Mh").to_string()
 }
