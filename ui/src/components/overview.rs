@@ -4,8 +4,7 @@ use yew::prelude::*;
 use yew_hooks::{use_async_with_options, UseAsyncOptions};
 
 use crate::{
-    components::nav::Nav,
-    models::blog_post::{Blog, BlogPost},
+    components::nav::Nav, models::blog_post::BlogPost,
     repositories::blog_posts_repo::BlogPostsRepository,
 };
 
