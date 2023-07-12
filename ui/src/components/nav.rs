@@ -2,11 +2,14 @@ use wasm_bindgen::{UnwrapThrowExt, JsCast};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::prelude::*;
+use yew_router::prelude::*;
+
+use crate::{models::search_term::SearchTerm, route::Route};
 
 #[function_component]
 pub fn Nav() -> Html {
     let modal_active = use_state(|| false);
-    let storage = use_local_storage::<Vec<String>>("search_terms".to_string());
+    let storage = use_local_storage::<Vec<SearchTerm>>("search_terms".to_string());
     let active_tab = use_state(|| "latest".to_string());
     let modal_search_term = use_state(|| String::new());
 
@@ -27,15 +30,16 @@ pub fn Nav() -> Html {
         let modal_search_term = modal_search_term.clone();
 
         Callback::from(move |_| {
-            let t = modal_search_term.to_string();
+            let t = &modal_search_term;
+            let new_search_term = SearchTerm::new(t);
 
             if let Some(value) = &*storage {
                 let mut search_terms = value.clone();
-                search_terms.push(t);
+                search_terms.push(new_search_term);
 
                 storage.set(search_terms)
             } else {
-                storage.set(vec![t]);
+                storage.set(vec![new_search_term]);
             }
 
             active_tab.set(modal_search_term.to_string());
@@ -58,11 +62,6 @@ pub fn Nav() -> Html {
         }
     });
 
-    let on_activate_tab = {
-        let active_tab = active_tab.clone();
-        Callback::from(move |_| active_tab.set(id))
-    };
-
     let modal_class = if *modal_active {
         classes!("modal", "is-active")
     } else {
@@ -75,11 +74,10 @@ pub fn Nav() -> Html {
                 <div class="modal-background" onclick={&on_close_modal}></div>
                 <div class="modal-card">
                     <header class="modal-card-head">
-                    <p class="modal-card-title">{"Add search term"}</p>
-                    <button class="delete" aria-label="close" onclick={&on_close_modal}></button>
+                        <p class="modal-card-title">{"Add search term"}</p>
+                        <button class="delete" aria-label="close" onclick={&on_close_modal}></button>
                     </header>
                     <section class="modal-card-body">
-
                         <div class="field">
                             <div class="field-body">
                                 <div class="field">
@@ -102,9 +100,20 @@ pub fn Nav() -> Html {
                     </section>
                 </div>
             </div>
-            <div class="tabs is-large is-boxed">
-                <ul>
-                    <li class={active_tab_classes("latest", &*active_tab)} onclick={ move |_|{ handle_formula_click.emit("fixed1");}}><a>{"Latest"}</a></li>
+
+            <aside class="menu">
+                <p class="menu-label">
+                    {"General"}
+                </p>
+                <ul class="menu-list">
+                    <li class={active_tab_classes("latest", &*active_tab)}>
+                        <Link<Route> to={Route::Overview}>{"Latest"}</Link<Route>>
+                    </li>
+                </ul>
+                <p class="menu-label">
+                    {"Topics"}
+                </p>
+                <ul class="menu-list">
                     {
                         if let Some(value) = &*storage {
                             html! {
@@ -112,7 +121,11 @@ pub fn Nav() -> Html {
                                     {
                                         for value.clone().iter().map(|s| {
                                             html! {
-                                                <li class={active_tab_classes(&s, &*active_tab)}><a>{s}</a></li>
+                                                <li class={active_tab_classes(&s.search_term, &*active_tab)}>
+                                                    <Link<Route> to={Route::Topic{ id: s.id.to_string()}}>
+                                                        {&s.search_term}
+                                                    </Link<Route>>
+                                                </li>
                                             }
                                         })
                                     }
@@ -122,9 +135,10 @@ pub fn Nav() -> Html {
                             html! {}
                         }
                     }
-                    <li><a onclick={&on_open_modal}>{"+"}</a></li>
+
+                    <li><button class="button is-primary" onclick={&on_open_modal}>{"+"}</button></li>
                 </ul>
-            </div>
+            </aside>
         </>
     }
 }

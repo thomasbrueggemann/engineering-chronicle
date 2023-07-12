@@ -4,7 +4,7 @@ use yew::prelude::*;
 use yew_hooks::{use_async_with_options, UseAsyncOptions};
 
 use crate::{
-    components::nav::Nav, models::blog_post::BlogPost,
+    models::blog_post::BlogPost,
     repositories::blog_posts_repo::BlogPostsRepository,
 };
 
@@ -30,13 +30,6 @@ pub fn Overview() -> Html {
 
         html! {
             <>
-                <section class="section">
-                <center class="mb-6">
-                    <h1 class="is-size-1" style="font-family: 'Queen Love Stories free', sans-serif;">{"📣 The Engineering Chronicle"}</h1>
-                </center>
-
-                <Nav />
-
                 {for blog_posts.iter().map(|post| {
 
                     let p = post.to_owned();
@@ -102,7 +95,6 @@ pub fn Overview() -> Html {
                     </div>
                     }
                 })}
-                </section>
             </>
         }
     } else {

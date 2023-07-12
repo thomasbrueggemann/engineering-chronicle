@@ -20,4 +20,3 @@ futures = "0.3.28"
 stopwatch = "0.0.7"
 colored = "2"
 shared = { path = "../shared" }
-unicode-truncate = "0.2.0"
