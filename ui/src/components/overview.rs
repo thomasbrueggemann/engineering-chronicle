@@ -5,7 +5,7 @@ use yew_hooks::{use_async_with_options, UseAsyncOptions};
 
 use crate::{
     models::blog_post::BlogPost,
-    repositories::blog_posts_repo::BlogPostsRepository,
+    repositories::blog_posts_repo::BlogPostsRepository, components::post::Post,
 };
 
 #[function_component]
@@ -31,69 +31,7 @@ pub fn Overview() -> Html {
         html! {
             <>
                 {for blog_posts.iter().map(|post| {
-
-                    let p = post.to_owned();
-                    html! {
-                        <div class="box">
-                        <article class="media">
-                        <div class="media-left">
-                            <figure class="image is-64x64">
-                            <img src="https://bulma.io/images/placeholders/128x128.png" alt="Image" />
-                            </figure>
-                        </div>
-                        <div class="media-content">
-                            <div class="content">
-                                <a href={p.url} target="_blank"><strong>{p.title}</strong></a>
-                                {" · "}
-                                {p.blog.title}
-                                {" · "}
-                                <small>{readable_date(p.published.date.number_long)}</small>
-                                <br />
-                                {p.content}
-                                {
-                                    if p.categories.len() > 0 {
-                                        html! {
-                                            <>
-                                                <br />
-                                                <br />
-                                                <div class="tags">
-                                                    {for p.categories.iter().map(|cat| {
-                                                        html! {
-                                                            <span class="tag is-primary">{cat}</span>
-                                                        }
-                                                    })}
-                                                </div>
-                                            </>
-                                        }
-                                    }
-                                    else {
-                                        html! {}
-                                    }
-                                }
-                            </div>
-                            <nav class="level is-mobile">
-                                <div class="level-left">
-                                    <a class="level-item" aria-label="reply">
-                                    <span class="icon is-small">
-                                        <i class="fas fa-reply" aria-hidden="true"></i>
-                                    </span>
-                                    </a>
-                                    <a class="level-item" aria-label="retweet">
-                                    <span class="icon is-small">
-                                        <i class="fas fa-retweet" aria-hidden="true"></i>
-                                    </span>
-                                    </a>
-                                    <a class="level-item" aria-label="like">
-                                    <span class="icon is-small">
-                                        <i class="fas fa-heart" aria-hidden="true"></i>
-                                    </span>
-                                    </a>
-                                </div>
-                            </nav>
-                        </div>
-                        </article>
-                    </div>
-                    }
+                    html! { <Post post={post.to_owned()} /> }
                 })}
             </>
         }
@@ -102,15 +40,4 @@ pub fn Overview() -> Html {
             <section class="section">{"😢 nothing to see here"}</section>
         }
     }
-}
-
-fn readable_date(timestamp: String) -> String {
-    let timestamp_parsed = timestamp.parse::<i64>().unwrap() / 1000;
-
-    let parsed_date = DateTime::<Utc>::from_utc(
-        NaiveDateTime::from_timestamp_opt(timestamp_parsed, 0).unwrap(),
-        Utc,
-    );
-
-    parsed_date.format("%d.%m.%Y %H:%Mh").to_string()
 }

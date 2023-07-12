@@ -24,18 +24,22 @@ fn routes(routes: Route) -> Html {
 fn app() -> Html {
     html! {
         <BrowserRouter>
-            <section class="section">
-                <center class="mb-6">
-                    <h1 class="is-size-1" style="font-family: 'Queen Love Stories free', sans-serif;">{"📣 The Engineering Chronicle"}</h1>
-                </center>
+            <div class="container">
+                <section class="section">
+                    <center class="mb-6">
+                        <h1 class="is-size-1" style="font-family: 'Queen Love Stories free', sans-serif;">{"📣 The Engineering Chronicle"}</h1>
+                    </center>
+                </section>
             
                 <div class="columns">
-                    <div class="column"><Nav /></div>
-                    <div class="column is-four-fifths">
+                    <div class="column">
+                        <Nav />
+                    </div>
+                    <div class="column is-10">
                         <Switch<Route> render={routes} />
                     </div>
                 </div>
-            </section>
+            </div>
         </BrowserRouter>
     }
 }
