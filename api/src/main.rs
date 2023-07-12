@@ -12,6 +12,7 @@ use rocket::serde::Serialize;
 use rocket::{Request, Response};
 use shared::blog_post::BlogPost;
 use std::env;
+use unicode_truncate::UnicodeTruncateStr;
 
 #[get("/")]
 fn index() -> &'static str {
@@ -43,7 +44,8 @@ async fn latest_posts() -> Json<Vec<BlogPost>> {
 
     let trunc: Vec<BlogPost> = blog_posts.into_iter().map(|mut post| {
         if post.content.len() > 250 {
-            post.content = format!("{}[…]", post.content[..250].to_string());
+            let (content_truncated, _) = post.content.unicode_truncate(250);
+            post.content = format!("{}[…]", content_truncated);
         }
 
         post

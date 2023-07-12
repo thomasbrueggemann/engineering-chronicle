@@ -58,6 +58,11 @@ pub fn Nav() -> Html {
         }
     });
 
+    let on_activate_tab = {
+        let active_tab = active_tab.clone();
+        Callback::from(move |_| active_tab.set(id))
+    };
+
     let modal_class = if *modal_active {
         classes!("modal", "is-active")
     } else {
@@ -99,7 +104,7 @@ pub fn Nav() -> Html {
             </div>
             <div class="tabs is-large is-boxed">
                 <ul>
-                    <li class={active_tab_classes("latest", &*active_tab)}><a>{"Latest"}</a></li>
+                    <li class={active_tab_classes("latest", &*active_tab)} onclick={ move |_|{ handle_formula_click.emit("fixed1");}}><a>{"Latest"}</a></li>
                     {
                         if let Some(value) = &*storage {
                             html! {
