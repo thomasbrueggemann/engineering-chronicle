@@ -63,22 +63,37 @@ async fn topic(search_term: String) -> Json<Vec<BlogPost>> {
 
     let pipeline = vec![
         doc! {
-            // filter on movie title:
-            "$match": {
-                "title": "A Star Is Born"
+            "$search": {
+                "index": "search",
+                "highlight": {
+                    "path": ["title", "content"]
+                },
+                "count": {
+                    "type": "lowerBound"
+                },
+                "scoreDetails": true,
+                "sort": {
+                    "published": -1
+                },
+                "tracking": {
+                    "searchTerms": search_term.to_string()
+                }
             }
         },
         doc! {
-            // sort by year, ascending:
-            "$sort": {
-                "year": 1
+            "$facet": {
+                "docs": [],
+                "meta": [
+                {"$replaceWith": "$$SEARCH_META"}
+                ]
             }
-        },
+        }
     ];
 
-    let result = blog_posts_col.aggregate(pipeline, None).await;
+    let cursor = blog_posts_col.aggregate(pipeline, None).await. unwrap();
+    let search_result = cursor.try_collect().await.unwrap();
 
-    Json("hi".to_string())
+    Json(search_result)
 }
 
 pub struct CORS;
