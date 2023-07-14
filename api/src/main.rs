@@ -1,9 +1,12 @@
 #[macro_use]
 extern crate rocket;
 
+use std::env;
+
 use futures::TryStreamExt;
 use mongodb::bson::doc;
 use mongodb::options::FindOptions;
+use mongodb::Database;
 use mongodb::{options::ClientOptions, Client};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
@@ -11,8 +14,10 @@ use rocket::serde::json::Json;
 use rocket::serde::Serialize;
 use rocket::{Request, Response};
 use shared::blog_post::BlogPost;
-use std::env;
+use tokio::sync::OnceCell;
 use unicode_truncate::UnicodeTruncateStr;
+
+static DB: OnceCell<Database> = OnceCell::new();
 
 #[get("/")]
 fn index() -> &'static str {
@@ -27,31 +32,53 @@ struct BlogPostsResponse {
 
 #[get("/latest")]
 async fn latest_posts() -> Json<Vec<BlogPost>> {
-    let connection_string = env::var("MONGODB_CONNECTION_STRING").unwrap();
-    let opts = ClientOptions::parse(connection_string).await.unwrap();
-
-    let mongo_client = Client::with_options(opts).unwrap();
-    let db = mongo_client.database("engineeringchronicle");
-    let blog_posts_col = db.collection::<BlogPost>("blogposts");
+    let blog_posts_col = DB.get().unwrap().collection::<BlogPost>("blogposts");
 
     let find_options = FindOptions::builder()
         .limit(100)
-        .sort(doc!{"published": -1})
+        .sort(doc! {"published": -1})
         .build();
 
     let cursor = blog_posts_col.find(doc! {}, find_options).await.unwrap();
     let blog_posts: Vec<BlogPost> = cursor.try_collect().await.unwrap();
 
-    let trunc: Vec<BlogPost> = blog_posts.into_iter().map(|mut post| {
-        if post.content.len() > 250 {
-            let (content_truncated, _) = post.content.unicode_truncate(250);
-            post.content = format!("{}[…]", content_truncated);
-        }
+    let trunc: Vec<BlogPost> = blog_posts
+        .into_iter()
+        .map(|mut post| {
+            if post.content.len() > 250 {
+                let (content_truncated, _) = post.content.unicode_truncate(250);
+                post.content = format!("{}[…]", content_truncated);
+            }
 
-        post
-    }).collect();
+            post
+        })
+        .collect();
 
     Json(trunc)
+}
+
+#[get("/topic/<search_term>")]
+async fn topic(search_term: String) -> Json<Vec<BlogPost>> {
+    let blog_posts_col = DB.get().unwrap().collection::<BlogPost>("blogposts");
+
+    let pipeline = vec![
+        doc! {
+            // filter on movie title:
+            "$match": {
+                "title": "A Star Is Born"
+            }
+        },
+        doc! {
+            // sort by year, ascending:
+            "$sort": {
+                "year": 1
+            }
+        },
+    ];
+
+    let result = blog_posts_col.aggregate(pipeline, None).await;
+
+    Json("hi".to_string())
 }
 
 pub struct CORS;
@@ -77,7 +104,13 @@ impl Fairing for CORS {
 }
 
 #[launch]
-fn rocket() -> _ {
+async fn rocket() -> _ {
+    let connection_string = env::var("MONGODB_CONNECTION_STRING").unwrap();
+    let opts = ClientOptions::parse(connection_string).await.unwrap();
+
+    let mongo_client = Client::with_options(opts).unwrap();
+    DB.set(mongo_client.database("engineeringchronicle"));
+
     rocket::build()
         .attach(CORS)
         .mount("/", routes![index, latest_posts])
