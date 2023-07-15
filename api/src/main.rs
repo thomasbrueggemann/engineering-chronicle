@@ -4,7 +4,7 @@ extern crate rocket;
 use std::env;
 
 use futures::TryStreamExt;
-use mongodb::bson::doc;
+use mongodb::bson::{doc, Document, self};
 use mongodb::options::FindOptions;
 use mongodb::Database;
 use mongodb::{options::ClientOptions, Client};
@@ -17,7 +17,7 @@ use shared::blog_post::BlogPost;
 use tokio::sync::OnceCell;
 use unicode_truncate::UnicodeTruncateStr;
 
-static DB: OnceCell<Database> = OnceCell::new();
+static DB: OnceCell<Database> = OnceCell::const_new();
 
 #[get("/")]
 fn index() -> &'static str {
@@ -42,6 +42,50 @@ async fn latest_posts() -> Json<Vec<BlogPost>> {
     let cursor = blog_posts_col.find(doc! {}, find_options).await.unwrap();
     let blog_posts: Vec<BlogPost> = cursor.try_collect().await.unwrap();
 
+    Json(trunc_blog_posts(blog_posts))
+}
+
+#[get("/topic/<search_term>")]
+async fn topic(search_term: String) -> Json<Vec<BlogPost>> {
+    let blog_posts_col = DB.get().unwrap().collection::<BlogPost>("blogposts");
+
+    let pipeline = vec![
+        doc! {
+            "$search": {
+                "index": "search",
+                "text": {
+                    "query": search_term.to_string(),
+                    "path": {
+                        "wildcard": "*"
+                    }
+                },
+                "tracking": {
+                    "searchTerms": search_term.to_string()
+                }
+            }
+        },
+        doc! {
+            "$sort": {
+                "published": -1
+            }
+        },
+        doc! {
+            "$limit": 25
+        }
+    ];
+
+    let cursor = blog_posts_col.aggregate(pipeline, None).await.unwrap();
+    let search_result: Vec<Document> = cursor.try_collect().await.unwrap();
+
+    let blog_posts = search_result
+        .into_iter()
+        .map(|result| bson::from_document(result).unwrap())
+        .collect();
+
+    Json(trunc_blog_posts(blog_posts))
+}
+
+fn trunc_blog_posts(blog_posts: Vec<BlogPost>) -> Vec<BlogPost> {
     let trunc: Vec<BlogPost> = blog_posts
         .into_iter()
         .map(|mut post| {
@@ -54,46 +98,7 @@ async fn latest_posts() -> Json<Vec<BlogPost>> {
         })
         .collect();
 
-    Json(trunc)
-}
-
-#[get("/topic/<search_term>")]
-async fn topic(search_term: String) -> Json<Vec<BlogPost>> {
-    let blog_posts_col = DB.get().unwrap().collection::<BlogPost>("blogposts");
-
-    let pipeline = vec![
-        doc! {
-            "$search": {
-                "index": "search",
-                "highlight": {
-                    "path": ["title", "content"]
-                },
-                "count": {
-                    "type": "lowerBound"
-                },
-                "scoreDetails": true,
-                "sort": {
-                    "published": -1
-                },
-                "tracking": {
-                    "searchTerms": search_term.to_string()
-                }
-            }
-        },
-        doc! {
-            "$facet": {
-                "docs": [],
-                "meta": [
-                {"$replaceWith": "$$SEARCH_META"}
-                ]
-            }
-        }
-    ];
-
-    let cursor = blog_posts_col.aggregate(pipeline, None).await. unwrap();
-    let search_result = cursor.try_collect().await.unwrap();
-
-    Json(search_result)
+    return trunc;
 }
 
 pub struct CORS;
@@ -124,9 +129,9 @@ async fn rocket() -> _ {
     let opts = ClientOptions::parse(connection_string).await.unwrap();
 
     let mongo_client = Client::with_options(opts).unwrap();
-    DB.set(mongo_client.database("engineeringchronicle"));
+    DB.set(mongo_client.database("engineeringchronicle")).unwrap();
 
     rocket::build()
         .attach(CORS)
-        .mount("/", routes![index, latest_posts])
+        .mount("/", routes![index, latest_posts, topic])
 }
