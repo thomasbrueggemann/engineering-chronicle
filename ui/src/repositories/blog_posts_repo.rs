@@ -23,4 +23,17 @@ impl BlogPostsRepository {
 
         Ok(blog_posts)
     }
+
+    pub async fn get_topic(&self, search_term: String) -> Result<Vec<BlogPost>, String> {
+        let url = format!("https://engineering-chronicle.thomasbrueggemann.com/topic/{}", &search_term);
+        let blog_posts = self.http_client.get(url)
+            .send()
+            .await
+            .unwrap()
+            .json::<Vec<BlogPost>>()
+            .await
+            .unwrap();
+
+        Ok(blog_posts)
+    }
 }
