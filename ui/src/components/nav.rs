@@ -4,7 +4,7 @@ use yew::prelude::*;
 use yew_hooks::prelude::*;
 use yew_router::prelude::*;
 
-use crate::{models::search_term::SearchTerm, route::Route};
+use crate::{models::search_term::SearchTerm, route::Route, components::topic_nav_item::TopicNavItem};
 
 #[function_component]
 pub fn Nav() -> Html {
@@ -12,6 +12,7 @@ pub fn Nav() -> Html {
     let storage = use_local_storage::<Vec<SearchTerm>>("search_terms".to_string());
     let active_tab = use_state(|| "latest".to_string());
     let modal_search_term = use_state(|| String::new());
+    let navigator = use_navigator().unwrap();
 
     let on_open_modal = {
         let modal_active = modal_active.clone();
@@ -32,6 +33,7 @@ pub fn Nav() -> Html {
         Callback::from(move |_| {
             let t = &modal_search_term;
             let new_search_term = SearchTerm::new(t);
+            let new_search_term_id = new_search_term.id.clone();
 
             if let Some(value) = &*storage {
                 let mut search_terms = value.clone();
@@ -44,8 +46,9 @@ pub fn Nav() -> Html {
 
             active_tab.set(modal_search_term.to_string());
             modal_search_term.set(String::new());
+            modal_active.set(false);
 
-            modal_active.set(false)
+            navigator.push(&Route::Topic { id: new_search_term_id });
         })
     };
 
@@ -110,7 +113,7 @@ pub fn Nav() -> Html {
                         <Link<Route> to={Route::Overview}>{"Latest"}</Link<Route>>
                     </li>
                 </ul>
-                <p class="menu-label">
+                <p class="menu-label mt-6">
                     {"Topics"}
                 </p>
                 <ul class="menu-list">
@@ -122,9 +125,7 @@ pub fn Nav() -> Html {
                                         for value.clone().iter().map(|s| {
                                             html! {
                                                 <li class={active_tab_classes(&s.search_term, &*active_tab)}>
-                                                    <Link<Route> to={Route::Topic{ id: s.id.to_string()}}>
-                                                        {&s.search_term}
-                                                    </Link<Route>>
+                                                    <TopicNavItem title={s.search_term.clone()} id={s.id.clone()} />     
                                                 </li>
                                             }
                                         })
@@ -136,7 +137,7 @@ pub fn Nav() -> Html {
                         }
                     }
 
-                    <li><button class="button is-primary" onclick={&on_open_modal}>{"+"}</button></li>
+                    <li><button class="mt-3 button is-primary is-fullwidth is-outlined" onclick={&on_open_modal}>{"+ add"}</button></li>
                 </ul>
             </aside>
         </>

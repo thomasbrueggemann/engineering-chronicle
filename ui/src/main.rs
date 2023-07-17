@@ -24,8 +24,8 @@ fn routes(routes: Route) -> Html {
 fn app() -> Html {
     html! {
         <BrowserRouter>
-            <div class="container">
-                <center class="pb-5 pt-6">
+            <div class="container is-max-desktop">
+                <center class="pb-6 pt-6">
                     <h1 class="is-size-1" style="font-family: 'Queen Love Stories free', sans-serif;">{"The Engineering Chronicle"}</h1>
                 </center>
             

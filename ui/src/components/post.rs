@@ -39,7 +39,7 @@ pub fn Post(props: &PostProps) -> Html {
                                         <div class="tags">
                                             {for props.post.categories.iter().map(|cat| {
                                                 html! {
-                                                    <span class="tag is-primary">{cat}</span>
+                                                    <span class="tag is-info is-light">{cat}</span>
                                                 }
                                             })}
                                         </div>
