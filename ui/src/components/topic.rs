@@ -35,6 +35,18 @@ pub fn Topic(props: &TopicProps) -> Html {
         UseAsyncOptions::enable_auto(),
     );
 
+    {
+        let id = props.id.clone();
+        let state = state.clone();
+        use_effect_with_deps(
+            move |_| {
+                state.run();
+                || ()
+            },
+            id,
+        );
+    }
+
     if state.loading {
         return html! { <section class="section"><bold>{"Loading..."}</bold></section>};
     }
