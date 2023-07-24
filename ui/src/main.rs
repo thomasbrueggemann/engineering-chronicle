@@ -1,15 +1,16 @@
-use components::overview::Overview;
+use pages::overview::Overview;
 use route::Route;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
 use crate::components::nav::Nav;
-use crate::components::topic::Topic;
+use crate::pages::topic::Topic;
 
 mod components;
 mod route;
 mod repositories;
 mod models;
+mod pages;
 
 fn routes(routes: Route) -> Html {
     match routes {

@@ -3,7 +3,7 @@ use wasm_bindgen::{UnwrapThrowExt, JsCast};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::prelude::*;
-use yew_router::prelude::*;
+use yew_router::{prelude::*, navigator};
 
 use crate::{models::search_term::SearchTerm, route::Route, components::topic_nav_item::TopicNavItem};
 
@@ -30,6 +30,7 @@ pub fn Nav() -> Html {
         let storage = storage.clone();
         let modal_active = modal_active.clone();
         let modal_search_term = modal_search_term.clone();
+        let navigator = navigator.clone();
 
         Callback::from(move |_| {
             let t = &modal_search_term;
@@ -115,7 +116,7 @@ pub fn Nav() -> Html {
                         </Link<Route>>
                     </li>
                 </ul>
-                <p class="menu-label mt-6">
+                <p class="menu-label mt-5">
                     {"Topics"}
                 </p>
                 <ul class="menu-list">
