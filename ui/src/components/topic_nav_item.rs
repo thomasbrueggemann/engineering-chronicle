@@ -7,7 +7,8 @@ use crate::{route::Route, models::search_term::SearchTerm};
 #[derive(Properties, PartialEq)]
 pub struct TopicNavItemProps {
     pub id: String,
-    pub title: String
+    pub title: String,
+    pub is_active: bool
 }
 
 
@@ -46,8 +47,15 @@ pub fn TopicNavItem(props: &TopicNavItemProps) -> Html {
         delete_classes.push("has-background-danger");
     }
 
+    let class = if props.is_active {
+        classes!("pr-0", "is-active")
+    }
+    else {
+        classes!("pr-0")
+    };
+
     html! {
-        <Link<Route> to={Route::Topic{ id: props.id.to_string()}} classes={classes!["pr-0"]}>
+        <Link<Route> to={Route::Topic{ id: props.id.to_string()}} classes={class}>
             {&props.title}
             <button onclick={on_delete_click} class={classes!(delete_classes)}></button>
         </Link<Route>>

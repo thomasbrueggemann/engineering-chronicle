@@ -1,3 +1,4 @@
+use log::info;
 use wasm_bindgen::{UnwrapThrowExt, JsCast};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
@@ -10,9 +11,10 @@ use crate::{models::search_term::SearchTerm, route::Route, components::topic_nav
 pub fn Nav() -> Html {
     let modal_active = use_state(|| false);
     let storage = use_local_storage::<Vec<SearchTerm>>("search_terms".to_string());
-    let active_tab = use_state(|| "latest".to_string());
+    
     let modal_search_term = use_state(|| String::new());
     let navigator = use_navigator().unwrap();
+    let current_route = use_route::<Route>();
 
     let on_open_modal = {
         let modal_active = modal_active.clone();
@@ -27,7 +29,6 @@ pub fn Nav() -> Html {
     let on_save_click = {
         let storage = storage.clone();
         let modal_active = modal_active.clone();
-        let active_tab = active_tab.clone();
         let modal_search_term = modal_search_term.clone();
 
         Callback::from(move |_| {
@@ -44,7 +45,6 @@ pub fn Nav() -> Html {
                 storage.set(vec![new_search_term]);
             }
 
-            active_tab.set(modal_search_term.to_string());
             modal_search_term.set(String::new());
             modal_active.set(false);
 
@@ -109,8 +109,10 @@ pub fn Nav() -> Html {
                     {"General"}
                 </p>
                 <ul class="menu-list">
-                    <li class={active_tab_classes("latest", &*active_tab)}>
-                        <Link<Route> to={Route::Overview}>{"Latest"}</Link<Route>>
+                    <li>
+                        <Link<Route> to={Route::Overview} classes={active_tab_classes(Route::Overview, &current_route)}>
+                            {"Latest"}
+                        </Link<Route>>
                     </li>
                 </ul>
                 <p class="menu-label mt-6">
@@ -124,8 +126,11 @@ pub fn Nav() -> Html {
                                     {
                                         for value.clone().iter().map(|s| {
                                             html! {
-                                                <li class={active_tab_classes(&s.search_term, &*active_tab)}>
-                                                    <TopicNavItem title={s.search_term.clone()} id={s.id.clone()} />     
+                                                <li>
+                                                    <TopicNavItem 
+                                                        title={s.search_term.clone()} 
+                                                        is_active={is_active(Route::Topic { id: s.search_term.clone() }, &current_route)} 
+                                                        id={s.id.clone()} />     
                                                 </li>
                                             }
                                         })
@@ -144,12 +149,30 @@ pub fn Nav() -> Html {
     }
 }
 
-fn active_tab_classes(tab_name: &str, active_tab: &str) -> Classes {
-    let is_active = tab_name.eq(active_tab);
-    if is_active {
+fn active_tab_classes(nav_route: Route, current_route: &Option<Route>) -> Classes {
+    if is_active(nav_route, current_route) {
         classes!("is-active")
-    }
+    } 
     else {
-        classes!()
+        classes!("")
+    }
+}
+
+fn is_active(nav_route: Route, current_route: &Option<Route>) -> bool {
+    match current_route {
+        Some(route) => {
+
+            info!("{:?}", current_route);
+            let active_route = route.clone();
+
+            if nav_route == active_route {
+                info!("{:?} = {:?}", nav_route, active_route);
+                true
+            }
+            else {
+                false
+            }
+        },
+        None => false
     }
 }
