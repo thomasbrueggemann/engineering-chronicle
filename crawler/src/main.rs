@@ -3,33 +3,21 @@ mod blogs;
 use anyhow::Result;
 use blogs::{get_blogs, parse_blog};
 use futures::stream::FuturesUnordered;
-use mongodb::{
-    options::{ClientOptions, InsertManyOptions},
-    Client,
-};
 use shared::blog_post::BlogPost;
 use stopwatch::Stopwatch;
-use std::env;
+use std::fs::File;
+use std::io::Write;
 
 #[tokio::main]
 async fn main() -> Result<()> {
 
     let mut watch = Stopwatch::start_new();
 
-    println!("Start reading enginnering blogs... ");
+    println!("Start reading engineering blogs... ");
 
     let blogs = get_blogs().await?;
 
     println!("✅ {} identified engineering blogs [{}s]", blogs.len(), watch.elapsed_ms() / 1000);
-
-    let mongo_connection_string = env::var("MONGODB_CONNECTION_STRING")
-        .expect("MongoDB connection string not set via env var MONGODB_CONNECTION_STRING!");
-
-    let mongo_client_options = ClientOptions::parse(mongo_connection_string).await?;
-    let mongo_client = Client::with_options(mongo_client_options)?;
-    let db = mongo_client.database("engineeringchronicle");
-    let blog_posts_col = db.collection::<BlogPost>("blogposts");
-
     println!("Start downloading blog feeds into memory... ");
     watch.restart();
 
@@ -38,24 +26,24 @@ async fn main() -> Result<()> {
         .map(|blog| tokio::spawn(parse_blog(blog)))
         .collect();
 
-    let blog_posts = futures::future::join_all(parse_all_blogs_tasks).await;
-    println!("✅ {} blog feeds downloaded [{}s]", blog_posts.len(), watch.elapsed_ms() / 1000);
+    let blog_post_results = futures::future::join_all(parse_all_blogs_tasks).await;
+    println!("✅ {} blog feeds downloaded [{}s]", blog_post_results.len(), watch.elapsed_ms() / 1000);
 
     println!("Start inserting blog posts into database...");
     watch.restart();
 
-    for blog_post in blog_posts {
-        if let Ok(posts) = blog_post.unwrap() {
-            let _ = blog_posts_col
-                .insert_many(
-                    posts,
-                    InsertManyOptions::builder().ordered(false).build(),
-                )
-                .await;
-        }
-    }
+    let blog_posts: Vec<BlogPost> = blog_post_results
+        .into_iter()
+        .filter_map(|blog_post_result| blog_post_result.ok())
+        .flatten()
+        .flatten()
+        .collect();
 
-    println!("✅ Done inserting [{}s]", watch.elapsed_ms() / 1000);
+    let json_str = serde_json::to_string_pretty(&blog_posts)?;
+    let mut file = File::create("blog_posts.json")?;
+    file.write_all(json_str.as_bytes())?;
+
+    println!("✅ Done crawling [{}s]", watch.elapsed_ms() / 1000);
     watch.stop();
 
     Ok(())

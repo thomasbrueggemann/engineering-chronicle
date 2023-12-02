@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use chrono::serde::ts_seconds_option;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Blog {
@@ -14,7 +15,6 @@ pub struct BlogPost {
     pub content: String,
     pub blog: Blog,
     pub categories: Vec<String>,
-
-    #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
-    pub published: DateTime<Utc>,
+    #[serde(with = "ts_seconds_option")]
+    pub published: Option<DateTime<Utc>>,
 }

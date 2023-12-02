@@ -11,12 +11,11 @@ tokio = { version = "1", features = ["full"] }
 feed-rs = "1.2"
 anyhow = "1.0.68"
 reqwest = "0.11.14"
-mongodb = "2.3.1"
 serde = "1.0.152"
 dissolve = "0.2.2"
-chrono = "0.4.23"
-bson = { version = "2.5.0", features = ["chrono-0_4"] }
+chrono = {version = "0.4.23", features = ["serde"]}
 futures = "0.3.28"
 stopwatch = "0.0.7"
 colored = "2"
 shared = { path = "../shared" }
+serde_json = "1.0.108"

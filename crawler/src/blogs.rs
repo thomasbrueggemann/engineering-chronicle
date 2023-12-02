@@ -29,7 +29,7 @@ pub async fn parse_blog(blog: Blog) -> Result<Vec<BlogPost>> {
                     content: strip_html_tags(&content).join(""),
                     title: title.content,
                     blog: blog.clone(),
-                    published: entry.published.or(Some(Utc::now()))?,
+                    published: entry.published.or(Some(Utc::now())),
                     categories
                 })
             } else {
