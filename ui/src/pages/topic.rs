@@ -1,3 +1,4 @@
+use log::info;
 use yew::prelude::*;
 use yew_hooks::{use_async_with_options, UseAsyncOptions, use_local_storage};
 

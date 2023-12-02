@@ -1,6 +1,6 @@
 use yew::prelude::*;
 use yew_hooks::use_local_storage;
-use yew_router::prelude::*;
+use yew_router::{prelude::*, navigator};
 
 use crate::{route::Route, models::search_term::SearchTerm};
 
@@ -8,7 +8,8 @@ use crate::{route::Route, models::search_term::SearchTerm};
 pub struct TopicNavItemProps {
     pub id: String,
     pub title: String,
-    pub is_active: bool
+    pub is_active: bool,
+    pub update_parent_callback: Callback<()>
 }
 
 
@@ -22,6 +23,7 @@ pub fn TopicNavItem(props: &TopicNavItemProps) -> Html {
     let on_delete_click = {
         let delete_state = delete_armed.clone();
         let id = props.id.clone();
+        let navigator = navigator.clone();
 
         Callback::from(move |_| {
             if !*delete_state {
@@ -37,6 +39,7 @@ pub fn TopicNavItem(props: &TopicNavItemProps) -> Html {
                     
                     storage.set(search_terms);
                     navigator.push(&Route::Overview);
+                    &props.update_parent_callback.emit(());
                 }
             }
         })

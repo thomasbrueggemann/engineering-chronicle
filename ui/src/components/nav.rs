@@ -11,10 +11,10 @@ use crate::{models::search_term::SearchTerm, route::Route, components::topic_nav
 pub fn Nav() -> Html {
     let modal_active = use_state(|| false);
     let storage = use_local_storage::<Vec<SearchTerm>>("search_terms".to_string());
-    
     let modal_search_term = use_state(|| String::new());
     let navigator = use_navigator().unwrap();
     let current_route = use_route::<Route>();
+    let force_update = use_force_update();
 
     let on_open_modal = {
         let modal_active = modal_active.clone();
@@ -50,6 +50,14 @@ pub fn Nav() -> Html {
             modal_active.set(false);
 
             navigator.push(&Route::Topic { id: new_search_term_id });
+        })
+    };
+
+    let on_force_update = {
+        let force_update = force_update.clone();
+
+        Callback::from(move |()| {
+            force_update.force_update();
         })
     };
 
@@ -131,7 +139,8 @@ pub fn Nav() -> Html {
                                                     <TopicNavItem 
                                                         title={s.search_term.clone()} 
                                                         is_active={is_active(Route::Topic { id: s.search_term.clone() }, &current_route)} 
-                                                        id={s.id.clone()} />     
+                                                        id={s.id.clone()}
+                                                        update_parent_callback={on_force_update} />     
                                                 </li>
                                             }
                                         })
@@ -162,12 +171,7 @@ fn active_tab_classes(nav_route: Route, current_route: &Option<Route>) -> Classe
 fn is_active(nav_route: Route, current_route: &Option<Route>) -> bool {
     match current_route {
         Some(route) => {
-
-            info!("{:?}", current_route);
-            let active_route = route.clone();
-
-            if nav_route == active_route {
-                info!("{:?} = {:?}", nav_route, active_route);
+            if nav_route == route.clone() {
                 true
             }
             else {
